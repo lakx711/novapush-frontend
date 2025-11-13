@@ -205,17 +205,25 @@ export default function Signup() {
               <span className="w-full border-t" />
             </div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-background px-2 text-muted-foreground">Or</span>
+              <span className="bg-background px-2 text-muted-foreground">Secure Signup</span>
             </div>
           </div>
 
           <Button
-            variant="outline"
             onClick={() => router.push("/signup/otp")}
-            className="w-full border-accent/20 hover:border-accent/40 hover:bg-accent/5"
+            className="w-full bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white font-semibold py-3 rounded-lg shadow-lg hover:shadow-xl transition-all duration-200"
           >
-            🔐 Sign up with Email OTP
+            <div className="flex items-center justify-center gap-2">
+              🔐 <span>Sign up with Email OTP</span>
+            </div>
           </Button>
+
+          <div className="bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-lg p-3">
+            <div className="flex items-center gap-2 text-green-700 dark:text-green-300">
+              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+              <span className="text-xs font-medium">Email Verified • No Password Required • Instant Access</span>
+            </div>
+          </div>
 
           {/* Footer */}
           <div className="text-center text-sm text-muted-foreground space-y-1">

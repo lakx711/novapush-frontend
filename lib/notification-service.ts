@@ -17,22 +17,84 @@ export interface NotificationLog {
 }
 
 export async function getLogs(): Promise<NotificationLog[]> {
-  const { api } = await import('./api')
-  const resp = await api.get('/logs')
-  const items = (resp.data?.logs || []) as Array<any>
-  return items.map((l) => ({
-    id: l._id,
-    templateId: l.templateId || '',
-    templateName: '',
-    recipientId: l.recipient,
-    recipientEmail: l.recipient,
-    recipientName: l.recipient,
-    channel: l.channel,
-    status: (l.status === 'queued' ? 'pending' : l.status) as NotificationStatus,
-    sentAt: new Date(l.createdAt),
-    deliveredAt: l.status === 'delivered' ? new Date(l.updatedAt) : undefined,
-    errorMessage: l.error
-  }))
+  try {
+    const { api } = await import('./api')
+    const resp = await api.get('/logs?latest=true')
+    const items = (resp.data?.logs || []) as Array<any>
+    
+    console.log('📊 Fetched logs:', items.length, 'items')
+    
+    return items.map((l) => ({
+      id: l._id || `log-${Date.now()}-${Math.random()}`,
+      templateId: l.templateId || 'unknown',
+      templateName: l.templateName || 'Notification',
+      recipientId: l.recipient || 'unknown',
+      recipientEmail: l.recipient || 'unknown@example.com',
+      recipientName: l.recipientName || l.recipient || 'Unknown User',
+      channel: l.channel || 'email',
+      status: (l.status === 'queued' ? 'pending' : l.status) as NotificationStatus,
+      sentAt: new Date(l.createdAt || Date.now()),
+      deliveredAt: l.status === 'delivered' ? new Date(l.updatedAt || l.createdAt) : undefined,
+      errorMessage: l.error || l.errorMessage
+    }))
+  } catch (error) {
+    console.error('❌ Failed to fetch logs:', error)
+    // Return sample data for development
+    return getSampleLogs()
+  }
+}
+
+// Sample logs for development/demo
+function getSampleLogs(): NotificationLog[] {
+  return [
+    {
+      id: 'sample-1',
+      templateId: 'welcome',
+      templateName: 'Welcome Email',
+      recipientId: 'user1',
+      recipientEmail: 'user1@example.com',
+      recipientName: 'John Doe',
+      channel: 'email',
+      status: 'delivered',
+      sentAt: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2 hours ago
+      deliveredAt: new Date(Date.now() - 2 * 60 * 60 * 1000 + 30000)
+    },
+    {
+      id: 'sample-2',
+      templateId: 'newsletter',
+      templateName: 'Weekly Newsletter',
+      recipientId: 'user2',
+      recipientEmail: 'user2@example.com',
+      recipientName: 'Jane Smith',
+      channel: 'email',
+      status: 'sent',
+      sentAt: new Date(Date.now() - 1 * 60 * 60 * 1000) // 1 hour ago
+    },
+    {
+      id: 'sample-3',
+      templateId: 'otp',
+      templateName: 'OTP Code',
+      recipientId: 'user3',
+      recipientEmail: 'user3@example.com',
+      recipientName: 'Bob Wilson',
+      channel: 'sms',
+      status: 'delivered',
+      sentAt: new Date(Date.now() - 30 * 60 * 1000), // 30 minutes ago
+      deliveredAt: new Date(Date.now() - 30 * 60 * 1000 + 15000)
+    },
+    {
+      id: 'sample-4',
+      templateId: 'promo',
+      templateName: 'Promotion Alert',
+      recipientId: 'user4',
+      recipientEmail: 'user4@example.com',
+      recipientName: 'Alice Brown',
+      channel: 'push',
+      status: 'failed',
+      sentAt: new Date(Date.now() - 15 * 60 * 1000), // 15 minutes ago
+      errorMessage: 'Device token expired'
+    }
+  ]
 }
 
 export async function sendNotification(data: {

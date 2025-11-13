@@ -127,17 +127,25 @@ export default function Login() {
               <span className="w-full border-t" />
             </div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-background px-2 text-muted-foreground">Or</span>
+              <span className="bg-background px-2 text-muted-foreground">Secure Login</span>
             </div>
           </div>
 
           <Button
-            variant="outline"
             onClick={() => router.push("/login/otp")}
-            className="w-full border-accent/20 hover:border-accent/40 hover:bg-accent/5"
+            className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold py-3 rounded-lg shadow-lg hover:shadow-xl transition-all duration-200"
           >
-            🔐 Login with Email OTP
+            <div className="flex items-center justify-center gap-2">
+              🔐 <span>Login with Email OTP</span>
+            </div>
           </Button>
+
+          <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+            <div className="flex items-center gap-2 text-blue-700 dark:text-blue-300">
+              <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+              <span className="text-xs font-medium">Passwordless • Secure • Fast</span>
+            </div>
+          </div>
 
           {/* Footer */}
           <div className="text-center text-sm text-muted-foreground space-y-1">
