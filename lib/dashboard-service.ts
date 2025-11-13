@@ -89,20 +89,46 @@ export async function getDashboardMetrics(): Promise<DashboardMetrics> {
     }))
     .filter((item) => item.value > 0)
 
-  // Build recent activity
-  const recentActivity = logs
-    .slice(-5)
-    .reverse()
-    .map((log) => {
-      const channel = log.channel as "email" | "sms" | "push"
-      return {
-        id: log.id,
-        type: channel,
-        recipients: 1,
-        successRate: (log.status === "delivered" || log.status === "sent") ? 100 : 0,
-        timestamp: log.sentAt,
+  // Build recent activity - group by timestamp and type for better display
+  const activityMap = new Map<string, {
+    id: string
+    type: "email" | "sms" | "push"
+    recipients: number
+    successful: number
+    timestamp: Date
+  }>()
+
+  // Group logs by hour and type
+  logs.forEach((log) => {
+    const hourKey = `${log.sentAt.toISOString().slice(0, 13)}-${log.channel}`
+    const existing = activityMap.get(hourKey)
+    
+    if (existing) {
+      existing.recipients += 1
+      if (log.status === "delivered" || log.status === "sent") {
+        existing.successful += 1
       }
-    })
+    } else {
+      activityMap.set(hourKey, {
+        id: log.id,
+        type: log.channel as "email" | "sms" | "push",
+        recipients: 1,
+        successful: (log.status === "delivered" || log.status === "sent") ? 1 : 0,
+        timestamp: log.sentAt
+      })
+    }
+  })
+
+  const recentActivity = Array.from(activityMap.values())
+    .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
+    .slice(0, 10)
+    .map((activity) => ({
+      id: activity.id,
+      type: activity.type,
+      recipients: activity.recipients,
+      successRate: activity.recipients > 0 ? Math.round((activity.successful / activity.recipients) * 100) : 0,
+      timestamp: activity.timestamp,
+    }))
 
   return {
     totalSent,

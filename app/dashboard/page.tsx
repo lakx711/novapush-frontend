@@ -7,9 +7,11 @@ import { Navbar } from "@/components/navbar"
 import { MetricsGrid } from "@/components/metrics-grid"
 import { EmptyState } from "@/components/empty-state"
 import { Card } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
 import { DashboardHeader } from "@/components/dashboard-header"
 import { ActivityFeed } from "@/components/activity-feed"
 import { useDashboardMetrics } from "@/hooks/use-dashboard-metrics"
+import { AlertCircle, RefreshCw } from "lucide-react"
 import {
   LineChart,
   Line,
@@ -29,7 +31,7 @@ import { Send } from "lucide-react"
 const COLORS = ["#667eea", "#10b981", "#f59e0b"]
 
 function DashboardContent() {
-  const { metrics, isLoading, refetch } = useDashboardMetrics()
+  const { metrics, isLoading, error, refetch } = useDashboardMetrics()
   const [isRefreshing, setIsRefreshing] = useState(false)
 
   const handleRefresh = async () => {
@@ -133,7 +135,7 @@ function DashboardContent() {
                             innerRadius={60}
                             outerRadius={90}
                             dataKey="value"
-                            label={({ name, value }) => `${name}: ${value}%`}
+                            label={({ name, value }: { name: string; value: number }) => `${name}: ${value}%`}
                             labelLine={false}
                           >
                             {metrics.channelDistribution.map((_, index) => (
@@ -174,6 +176,22 @@ function DashboardContent() {
 
                   <ActivityFeed activities={metrics.recentActivity} />
                 </>
+              )}
+              
+              {error && (
+                <div className="col-span-full">
+                  <Card className="glow-card p-6 text-center">
+                    <div className="text-red-500 mb-4">
+                      <AlertCircle className="w-8 h-8 mx-auto mb-2" />
+                      <p className="font-semibold">Failed to load dashboard data</p>
+                      <p className="text-sm text-muted-foreground mt-1">{error.message}</p>
+                    </div>
+                    <Button onClick={refetch} variant="outline" size="sm">
+                      <RefreshCw className="w-4 h-4 mr-2" />
+                      Try Again
+                    </Button>
+                  </Card>
+                </div>
               )}
             </>
           )}
