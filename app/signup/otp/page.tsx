@@ -1,18 +1,21 @@
 "use client"
 
 import type React from "react"
-import { signup } from "@/lib/auth-utils"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card } from "@/components/ui/card"
 import { ThemeToggle } from "@/components/theme-toggle"
-import { ArrowLeft, Mail, Lock, User, Eye, EyeOff } from "lucide-react"
+import { OTPVerification } from "@/components/auth/otp-verification"
+import { ArrowLeft, Mail, Lock, User, Eye, EyeOff, Shield } from "lucide-react"
 import Link from "next/link"
+import { sendOTP, signupWithOTP } from "@/lib/otp-service"
+import { setAuthToken } from "@/lib/auth-utils"
 
-export default function Signup() {
+export default function SignupWithOTP() {
   const router = useRouter()
+  const [step, setStep] = useState<'email' | 'otp'>('email')
   const [name, setName] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -31,7 +34,7 @@ export default function Signup() {
     setPasswordStrength(strength)
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError("")
 
@@ -48,19 +51,77 @@ export default function Signup() {
     setLoading(true)
 
     try {
-      const result = await signup(email, password, name)
-
+      const result = await sendOTP(email, 'signup')
+      
       if (!result.success) {
-        setError(result.error || "Signup failed")
+        setError(result.message)
         return
       }
 
-      router.push("/login")
+      setStep('otp')
     } catch (err) {
-      setError("Signup failed. Please try again.")
+      setError("Failed to send verification code. Please try again.")
     } finally {
       setLoading(false)
     }
+  }
+
+  const handleOTPVerify = async (otp: string) => {
+    setLoading(true)
+    setError("")
+
+    try {
+      const result = await signupWithOTP(email, password, name, otp)
+      
+      if (!result.success) {
+        setError(result.message)
+        return
+      }
+
+      if (result.token) {
+        setAuthToken(result.token)
+        router.push("/dashboard")
+      }
+    } catch (err) {
+      setError("Registration failed. Please try again.")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleResend = () => {
+    setError("")
+  }
+
+  if (step === 'otp') {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background via-background to-secondary/20 flex flex-col">
+        {/* Header */}
+        <header className="border-b border-border/50 backdrop-blur-sm">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
+            <Button variant="ghost" onClick={() => setStep('email')} className="gap-2">
+              <ArrowLeft className="w-4 h-4" />
+              Back
+            </Button>
+            <ThemeToggle />
+          </div>
+        </header>
+
+        {/* OTP Verification */}
+        <main className="flex-1 flex items-center justify-center px-4 sm:px-6 lg:px-8 py-20">
+          <Card className="glow-card w-full max-w-md p-8 page-enter">
+            <OTPVerification
+              email={email}
+              purpose="signup"
+              onVerify={handleOTPVerify}
+              onResend={handleResend}
+              loading={loading}
+              error={error}
+            />
+          </Card>
+        </main>
+      </div>
+    )
   }
 
   return (
@@ -79,12 +140,15 @@ export default function Signup() {
       {/* Main Content */}
       <main className="flex-1 flex items-center justify-center px-4 sm:px-6 lg:px-8 py-20">
         <Card className="glow-card w-full max-w-md p-8 space-y-6 page-enter">
-          <div className="space-y-2">
+          <div className="space-y-2 text-center">
+            <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto">
+              <Shield className="w-8 h-8 text-blue-600" />
+            </div>
             <h1 className="text-2xl font-bold">Create Account</h1>
-            <p className="text-muted-foreground">Join NovaPush and start sending notifications</p>
+            <p className="text-muted-foreground">Join NovaPush with email verification</p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleEmailSubmit} className="space-y-4">
             {/* Name */}
             <div className="space-y-2">
               <label className="text-sm font-medium flex items-center gap-2">
@@ -195,40 +259,25 @@ export default function Signup() {
               disabled={loading}
               className="glow-button w-full bg-accent hover:bg-accent/90 text-background font-semibold"
             >
-              {loading ? "Creating Account..." : "Sign Up"}
+              {loading ? "Sending Code..." : "Send Verification Code"}
             </Button>
           </form>
 
-          {/* OTP Signup Option */}
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t" />
-            </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-background px-2 text-muted-foreground">Or</span>
-            </div>
-          </div>
-
-          <Button
-            variant="outline"
-            onClick={() => router.push("/signup/otp")}
-            className="w-full border-accent/20 hover:border-accent/40 hover:bg-accent/5"
-          >
-            🔐 Sign up with Email OTP
-          </Button>
-
           {/* Footer */}
-          <div className="text-center text-sm text-muted-foreground space-y-1">
-            <p>
-              Already have an account?{" "}
-              <Link href="/login" className="text-accent hover:underline">
-                Login
-              </Link>
+          <div className="text-center space-y-2">
+            <p className="text-xs text-muted-foreground">
+              We'll send a 6-digit verification code to your email
             </p>
-            <p>
-              Prefer OTP login?{" "}
+            <p className="text-sm text-muted-foreground">
+              Already have an account?{" "}
               <Link href="/login/otp" className="text-accent hover:underline">
                 Login with OTP
+              </Link>
+            </p>
+            <p className="text-sm text-muted-foreground">
+              Prefer password login?{" "}
+              <Link href="/signup" className="text-accent hover:underline">
+                Traditional Signup
               </Link>
             </p>
           </div>

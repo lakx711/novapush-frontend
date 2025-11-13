@@ -121,12 +121,38 @@ export default function Login() {
             </Button>
           </form>
 
+          {/* OTP Login Option */}
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-background px-2 text-muted-foreground">Or</span>
+            </div>
+          </div>
+
+          <Button
+            variant="outline"
+            onClick={() => router.push("/login/otp")}
+            className="w-full border-accent/20 hover:border-accent/40 hover:bg-accent/5"
+          >
+            🔐 Login with Email OTP
+          </Button>
+
           {/* Footer */}
-          <div className="text-center text-sm text-muted-foreground">
-            Don't have an account?{" "}
-            <Link href="/signup" className="text-accent hover:underline">
-              Sign up
-            </Link>
+          <div className="text-center text-sm text-muted-foreground space-y-1">
+            <p>
+              Don't have an account?{" "}
+              <Link href="/signup" className="text-accent hover:underline">
+                Sign up
+              </Link>
+            </p>
+            <p>
+              Prefer OTP signup?{" "}
+              <Link href="/signup/otp" className="text-accent hover:underline">
+                Sign up with OTP
+              </Link>
+            </p>
           </div>
         </Card>
       </main>
